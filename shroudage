@@ -30,6 +30,9 @@ If you're checking out a repository, you'll want to run `git restore .`
 after init to force decryption of the working copy (which would be the
 encrypted contents in the initial checkout).
 
+To re-encrypt the files in your working copy, run `shroudage lock`.
+Run `shroudage unlock` to decrypt the files in your working copy again.
+
 ## Validating
 
 After staging a change, use `git diff --staged --no-textconv` to see what
@@ -212,6 +215,35 @@ readme() {
     echo "${_README}"
 }
 
+lock() {
+    test -n "$(git status --porcelain)" && {
+        echo "Working directory not clean; stash or commit changes first."
+        exit 1
+    }
+    rm -f $UNPROTECTED_KEY_FILE
+    git config --remove filter.shroudage 2>/dev/null
+    git config --remove diff.shroudage 2>/dev/null
+
+    enc_files=$(git ls-files | git check-attr --stdin filter | grep "filter: shroudage" | cut -d: -f1)
+    for f in $enc_files; do
+        touch "$f"
+        git restore "$f"
+    done
+}
+
+unlock() {
+    test -n "$(git status --porcelain)" && {
+        echo "Working directory not clean; stash or commit changes first."
+        exit 1
+    }
+    init
+    enc_files=$(git ls-files | git check-attr --stdin filter | grep "filter: shroudage" | cut -d: -f1)
+    for f in $enc_files; do
+        touch "$f"
+        git restore "$f"
+    done
+}
+
 if [[ $# -lt 1 ]]; then
     echo "Usage: $0 <subcommand> [<filename>]"
     exit 1
@@ -221,7 +253,7 @@ subcommand="$1"
 shift
 
 case "$subcommand" in
-    clean|smudge|textconv|init|readme|update)
+    clean|smudge|textconv|init|readme|update|lock|unlock)
         "$subcommand" "$@"
         ;;
     *)

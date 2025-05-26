@@ -23,6 +23,9 @@ If you're checking out a repository, you'll want to run `git restore .`
 after init to force decryption of the working copy (which would be the
 encrypted contents in the initial checkout).
 
+To re-encrypt the files in your working copy, run `shroudage lock`.
+Run `shroudage unlock` to decrypt the files in your working copy again.
+
 ## Validating
 
 After staging a change, use `git diff --staged --no-textconv` to see what
